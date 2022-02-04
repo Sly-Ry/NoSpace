@@ -1,4 +1,5 @@
 const inquirer = require('inquirer');
+const db = require('./db/connection.js')
 
 function init() {
     return inquirer.prompt([
@@ -15,10 +16,10 @@ function init() {
                 displayDepartment();
                 break;
             case 'view all roles':
-                displeyRoles();
+                displayRoles();
                 break;
             case 'view all employees':
-                displeyEmployees();
+                displayEmployees();
                 break;
             case 'add a department':
                 addDepartment();
@@ -32,21 +33,41 @@ function init() {
             case 'update an employee role':
                 updateEmployee();
         }
+    });
+};
+
+function displayDepartment() {
+    const sql = `SELECT * FROM departments`;
+    db.query(sql, (err, rows) => {
+        console.table(rows);
+        console.log()
     })
-}
+};
 
-function displayDepartment();
+function displayRoles() {
+    const sql = `SELECT * FROM roles`;
+    db.query(sql, (err, rows) => {
+        console.table(rows);
+    })
+};
 
-function displeyRoles();
+function displayEmployees() {
+    const sql = `SELECT * FROM employees`;
+    db.query(sql, (err, rows) => {
+        console.table(rows);
+    })
+};
 
-function displeyEmployees();
+// function addDepartment();
 
-function addDepartment();
+// function addRole();
 
-function addRole();
+// function addEmployee();
 
-function addEmployee();
+// function updateEmployee();
 
-function updateEmployee();
+// function addEmployee();
+
+// function updateEmployee();
 
 init();
