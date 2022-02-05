@@ -1,5 +1,7 @@
 const inquirer = require('inquirer');
-const db = require('./db/connection.js')
+const conTable = require('console.table');
+const db = require('./db/connection.js');
+
 
 function init() {
     return inquirer.prompt([
@@ -7,7 +9,7 @@ function init() {
             type: 'list',
             name: 'query',
             message: 'What would you like to do?',
-            choices: ['view all departments', 'view all roles', 'view all employees', 'add a department', 'add a role', 'add an employee', 'update an employee role']
+            choices: ['view all departments', 'view all roles', 'view all employees', 'add a department', 'add a role', 'add an employee', 'update an employee role', 'None']
         }
     ])
     .then(choice => {
@@ -32,30 +34,73 @@ function init() {
                 break;
             case 'update an employee role':
                 updateEmployee();
+            default:
+                db.end();
         }
     });
 };
 
 function displayDepartment() {
-    const sql = `SELECT * FROM departments`;
-    db.query(sql, (err, rows) => {
-        console.table(rows);
-        console.log()
-    })
+    console.log('Displaying all departments:');
+    const sql = `SELECT 
+        departments.id AS id, departments.name AS departments 
+        FROM departments
+        `;
+
+    db.promise().query(sql)
+        .then(([ rows ]) => {
+            console.table(rows);
+            init();
+        })
+        .catch(err => {
+            throw err;
+        });
 };
 
 function displayRoles() {
-    const sql = `SELECT * FROM roles`;
-    db.query(sql, (err, rows) => {
-        console.table(rows);
-    })
+    console.log('Displaying all job titles:');
+    const sql = `SELECT 
+        roles.id, 
+        roles.title, 
+        roles.salary, 
+        departments.name AS departments FROM roles
+        INNER JOIN departments 
+        ON roles.department_id = departments.id
+        `;
+
+    db.promise().query(sql)
+        .then(([ rows ]) => {
+            console.table(rows);
+            init();
+        })
+        .catch(err => {
+            throw err;
+        });
 };
 
 function displayEmployees() {
-    const sql = `SELECT * FROM employees`;
-    db.query(sql, (err, rows) => {
-        console.table(rows);
-    })
+    console.log('Displaying all employees:');
+    const sql = `SELECT 
+        employees.id, 
+        employees.first_name,
+        employees.last_name,
+        roles.title,
+        departments.name AS departments,
+        roles.salary,
+        CONCAT (manager.first_name, ' ', manager.last_name) AS manager FROM employees
+        LEFT JOIN roles ON employees.role_id = roles.id
+        LEFT JOIN departments ON roles.department_id = departments.id
+        LEFT JOIN employees manager ON employees.manager_id = manager.id
+        `;
+
+    db.promise().query(sql)
+        .then(([ rows ]) => {
+            console.table(rows);
+            init();
+        })
+        .catch(err => {
+            throw err;
+        });
 };
 
 // function addDepartment();
@@ -71,3 +116,4 @@ function displayEmployees() {
 // function updateEmployee();
 
 init();
+
