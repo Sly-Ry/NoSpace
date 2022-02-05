@@ -9,37 +9,41 @@ function init() {
             type: 'list',
             name: 'query',
             message: 'What would you like to do?',
-            choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update an employee role', 'End App']
+            choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update an employee role', 'Update an employee manager', 'End App']
         }
     ])
     .then(choice => {
         switch (choice.query) {
-            case 'view all departments':
+            case 'View all departments':
                 displayDepartment();
                 break;
-            case 'view all roles':
+            case 'View all roles':
                 displayRoles();
                 break;
-            case 'view all employees':
+            case 'View all employees':
                 displayEmployees();
                 break;
-            case 'add a department':
+            case 'Add a department':
                 addDepartment();
                 break;
-            case 'add a role':
+            case 'Add a role':
                 addRole();
                 break;
-            case 'add an employee':
+            case 'Add an employee':
                 addEmployee();
                 break;
-            case 'update an employee role':
-                updateEmployee();
-            default:
-                db.end();
+            case 'Update an employee role':
+                updateEmpRole();
+            case 'Update an employee manager':
+                updateEmpManager();
+            case 'End App':
+                console.log('Thank you and have a great day!')
+                break;
         }
     });
 };
 
+// function to display departments
 function displayDepartment() {
     console.log('Displaying all departments:');
     const sql = `SELECT 
@@ -57,6 +61,7 @@ function displayDepartment() {
         });
 };
 
+// function to display roles
 function displayRoles() {
     console.log('Displaying all job titles:');
     const sql = `SELECT 
@@ -77,7 +82,7 @@ function displayRoles() {
             throw err;
         });
 };
-
+// function to display employees
 function displayEmployees() {
     console.log('Displaying all employees:');
     const sql = `SELECT 
@@ -103,6 +108,7 @@ function displayEmployees() {
         });
 };
 
+// function to add a department
 function addDepartment() {
     inquirer.prompt([
         {
@@ -134,6 +140,7 @@ function addDepartment() {
     });
 };
 
+// function to add a role
 function addRole() {
     inquirer.prompt([
         {
@@ -206,6 +213,7 @@ function addRole() {
     })
 };
 
+// function to add an employee
 function addEmployee() {
     inquirer.prompt([
         {
@@ -299,8 +307,132 @@ function addEmployee() {
     });
 };
 
-// function updateEmployee();
+// function to upfdate an employee
+function updateEmpRole() {
+    // get employee from table
+    const employeeSql = `SELECT * FROM employees`;
 
+    db.query(employeeSql, (err, data) => {
+        if(err) throw err;
+
+        const employees = data.map(({ id, first_name, last_name }) => 
+            ({ name: first_name + " " + last_name, value: id }));
+        
+        inquirer.prompt([
+            {
+                type: 'list',
+                name: 'name',
+                message: "Which employee would you like to update?",
+                choices: employees
+            }
+        ])
+        .then(empChoice => {
+            const employee = empChoice.name;
+            
+            const params = [];
+            
+            params.push(employee);
+            
+            const roleSql = `SELECT * FROM roles`;
+
+            db.query(roleSql, (err, data) => {
+                if (err) throw err;
+
+                // map through our Roles table and make them choices for the inquirer
+                const roles = data.map(({ id, title }) => ({ name: title, value: id }));
+
+                inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'role',
+                        message: "What is this employee's new role?",
+                        choices: roles
+                    }
+                ])
+                .then(roleChoice => {
+                    const newRole = roleChoice.role;
+
+                    params.push(newRole);
+
+                    let employee = params[0];
+                    params[0] = newRole;
+                    params[1] = employee;
+
+                    const sql = `UPDATE employees SET role_id = ? WHERE id = ?`
+
+                    db.query(sql, params, (err, rows) => {
+                        if(err) throw err;
+                        console.log('Employee has been updated!');
+                        displayEmployees();
+                    });
+                });
+            });
+        });
+    });
+};
+
+function updateEmpManager() {
+    // get employee from table
+    const employeeSql = `SELECT * FROM employees`;
+
+    db.query(employeeSql, (err, data) => {
+        if(err) throw err;
+
+        const employees = data.map(({ id, first_name, last_name }) => 
+            ({ name: first_name + " " + last_name, value: id }));
+        
+        inquirer.prompt([
+            {
+                type: 'list',
+                name: 'name',
+                message: "Which employee would you like to update?",
+                choices: employees
+            }
+        ])
+        .then(empChoice => {
+            const employee = empChoice.name;
+            
+            const params = [];
+            
+            params.push(employee);
+            
+            const managerSql = `SELECT * FROM employees`;
+
+            db.query(managerSql, (err, data) => {
+                if (err) throw err;
+
+                // map through our Roles table and make them choices for the inquirer
+                const managers = data.map(({ id, first_name, last_name }) => 
+                ({ name: first_name + " " + last_name, value: id }));
+
+                inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'manager',
+                        message: "Who is this employee's new manager?",
+                        choices: managers
+                    }
+                ])
+                .then(managerChoice => {
+                    const newManager = managerChoice.manager;
+
+                    params.push(newManager);
+
+                    let employee = params[0];
+                    params[0] = newManager;
+                    params[1] = employee;
+
+                    const sql = `UPDATE employees SET manager_id = ? WHERE id = ?`
+
+                    db.query(sql, params, (err, rows) => {
+                        if(err) throw err;
+                        console.log('Employee has been updated!');
+                        displayEmployees();
+                    });
+                });
+            });
+        });
+    });
+};
 
 init();
-
