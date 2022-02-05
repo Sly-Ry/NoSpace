@@ -112,8 +112,9 @@ function addDepartment() {
             validate: addDept => {
                 if (addDept) {
                     return true;
-                } else {
-                    console.log('Please enter a department');
+                } 
+                else {
+                    console.log('Please enter a department!');
                     return false;
                 }
             }
@@ -123,7 +124,7 @@ function addDepartment() {
         const sql = `INSERT INTO 
             departments (name)
             VALUES (?)`;
-            
+
         db.query(sql, dept.addDept, (err, rows) => {
             if (err) throw err;
             console.log('Added ' + dept.addDept + ' to departments!')
@@ -133,15 +134,82 @@ function addDepartment() {
     });
 };
 
-// function addRole();
+function addRole() {
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'title',
+            message: 'What role would you like to add?',
+            validate: addTitle => {
+                if (addTitle) {
+                    return true;
+                } 
+                else {
+                    console.log('Please enter a role!');
+                    return false;
+                }
+            }
+        },
+        {
+            type: 'input',
+            name: 'salary',
+            message: 'What is the salary of this role? Ex: (29.99)',
+            validate: addSalary => {
+                if (isNaN(addSalary)) {
+                    console.log(' Please enter the salary!');
+                    return false;
+                } 
+                else {
+                    return true;
+                }
+            }
+        }
+    ])
+    .then(data => {
+        // an array to hold role data
+        const params = [data.title, data.salary];
+
+        const roleSql = `SELECT name, id FROM departments`;
+        
+        db.query(roleSql, (err, data) => {
+            if(err) throw err;
+
+            // map through our Departments table and make them choices for the inquirer
+            const dept = data.map(({ name, id }) => ({ name: name, value: id }));
+
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'dept',
+                    message: 'What department is this role in?',
+                    choices: dept
+                }
+            ])
+            .then(deptChoice => {
+                const roleDept = deptChoice.dept;
+                // push department choice into role data array
+                params.push(roleDept);
+
+                const sql = `INSERT INTO 
+                    roles (title, salary, department_id)
+                    VALUES (?, ?, ?)
+                    `;
+
+                db.query(sql, params, (err, rows) => {
+                    if (err) throw err;
+                    console.log('Added' + data.role + " to roles!"); 
+
+                    displayRoles();
+                })
+            })
+        }) 
+    })
+};
 
 // function addEmployee();
 
 // function updateEmployee();
 
-// function addEmployee();
-
-// function updateEmployee();
 
 init();
 
